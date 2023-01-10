@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <poll.h>
+#include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <list>
@@ -428,11 +429,20 @@ err_code_t ConnectionPool::waitPoll() {
   err_code_t ret_code = RET_OK;
   while (m_nActiveConn) {
     int rv = poll(pollfds, n_fds, m_pollTimeout);
+    
     if (rv == -1) {
+      log_err(" Value of errno is (log poll error): %d\n ", errno);
+      log_err(" String of errno is (log poll error): %d\n ",strerror(errno));
+      fprintf(stderr, " Value of errno is (fprint poll error): %d\n ", errno);
+      fprintf(stderr, " String of errno is (fprint poll error): %s\n ", strerror(errno));
       markDeadAll(pollfds, keywords::kPOLL_ERROR);
       ret_code = RET_POLL_ERR;
       break;
     } else if (rv == 0) {
+      log_err(" Value of errno is (log poll timeout): %d\n ", errno);
+      log_err(" String of errno is (log poll timeout): %d\n ", strerror(errno));
+      fprintf(stderr, " Value of errno is (fprint poll timeout): %d\n ", errno);
+      fprintf(stderr, " String of errno is (fprint poll timeout): %s\n ", strerror(errno));
       log_warn("poll timeout. (m_nActiveConn: %d)", m_nActiveConn);
       // NOTE: MUST reset all active TCP connections after timeout.
       markDeadAll(pollfds, keywords::kPOLL_TIMEOUT_ERROR);
